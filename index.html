@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ระบบคำนวณ OT</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        .ot-highlight {
+            background-color: #c8e6c9; /* สีเขียวอ่อน */
+        }
+    </style>
+</head>
+<body>
+    <h1>ระบบคำนวณ OT</h1>
+    <label for="holidays">เลือกวันหยุด:</label>
+    <input type="date" id="holiday">
+    <button onclick="addHoliday()">เพิ่มวันหยุด</button>
+    <button onclick="startCalculation()">เริ่มการคำนวณ</button>
+    <ul id="holidayList"></ul>
+    <table id="otTable">
+        <thead>
+            <tr>
+                <th>ชื่อ-สกุล</th>
+                <th>วันที่</th>
+                <th>เวลาเข้างาน</th>
+                <th>เวลาออกงาน</th>
+                <th>วัน</th>
+                <th>OT (ชั่วโมง)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        const googleSheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQnzcErSEtSX3nJQyJ2y3fIEwrwVSsGQc9sX9tyNr6w_rr755G9g882mm6J-_m2gR6rmvY6gF2fO6io/pub?gid=0&single=true&output=csv'; // แทนที่ด้วยลิงก์ CSV ของคุณ
+        const holidays = new Set();
+
+        function addHoliday() {
+            const holidayInput = document.getElementById('holiday');
+            const holiday = holidayInput.value;
+            if (holiday && !holidays.has(holiday)) {
+                holidays.add(holiday);
+                const holidayList = document.getElementById('holidayList');
+                const listItem = document.createElement('li');
+                listItem.textContent = holiday;
+                holidayList.appendChild(listItem);
+                holidayInput.value = '';
+            }
+        }
+
+        function startCalculation() {
+            fetch(googleSheetCsvUrl)
+                .then(response => response.text())
+                .then(csv => {
+                    const data = parseCSV(csv);
+                    const otData = calculateOT(data, holidays);
+                    displayResults(otData);
+                });
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const result = [];
+            const headers = lines[0].split(',');
+
+            for (let i = 1; i < lines.length; i++) {
+                const obj = {};
+                const currentLine = lines[i].split(',');
+
+                for (let j = 0; j < headers.length; j++) {
+                    obj[headers[j].trim()] = currentLine[j] ? currentLine[j].trim() : '';
+                }
+                result.push(obj);
+            }
+            return result;
+        }
+
+        function calculateOT(data, holidays) {
+            const otData = [];
+            const employeeData = {};
+
+            data.forEach(row => {
+                const name = row['ชื่อ-สกุล'];
+                const dateTime = row['วันที่-เวลา'];
+                const [date, time] = dateTime.split(' ');
+
+                if (!employeeData[name]) {
+                    employeeData[name] = {};
+                }
+
+                if (!employeeData[name][date]) {
+                    employeeData[name][date] = {};
+                }
+
+                if (!employeeData[name][date].in) {
+                    employeeData[name][date].in = time;
+                } else {
+                    employeeData[name][date].out = time;
+                }
+            });
+
+            for (const name in employeeData) {
+                for (const date in employeeData[name]) {
+                    const inTime = employeeData[name][date].in;
+                    const outTime = employeeData[name][date].out;
+                    const day = new Date(date).toLocaleDateString('th-TH', { weekday: 'long' });
+                    let otHours = 0;
+
+                    if (inTime && outTime) {
+                        otHours = calculateOtHours(date, inTime, outTime, holidays);
+                    } else {
+                        otHours = 0; // ถ้าไม่มีข้อมูลครบ ให้ถือว่าไม่ได้ทำ OT
+                    }
+
+                    otData.push({ name, date, timeIn: inTime || '-', timeOut: outTime || '-', day, otHours });
+                }
+            }
+            return otData;
+        }
+
+        function calculateOtHours(date, timeIn, timeOut, holidays) {
+            const day = new Date(date).getDay();
+            const isHoliday = holidays.has(date);
+            const [inHour, inMinute] = timeIn.split(':').map(Number);
+            const [outHour, outMinute] = timeOut.split(':').map(Number);
+            const inTimeDecimal = inHour + inMinute / 60;
+            const outTimeDecimal = outHour + outMinute / 60;
+            let otHours = 0;
+
+            if (isHoliday) {
+                otHours = outTimeDecimal - inTimeDecimal;
+            } else if (day >= 1 && day <= 5) { // วันจันทร์ - ศุกร์
+                if (outTimeDecimal > 16.5) {
+                    otHours = outTimeDecimal - 16.5;
+                }
+            } else { // วันเสาร์ - อาทิตย์
+                otHours = outTimeDecimal - inTimeDecimal;
+            }
+            return otHours.toFixed(2);
+        }
+
+        function displayResults(otData) {
+            const tableBody = document.querySelector('#otTable tbody');
+            tableBody.innerHTML = '';
+
+            otData.forEach(item => {
+                const row = document.createElement('tr');
+                const otCell = `<td class="${item.otHours >= 2 ? 'ot-highlight' : ''}">${item.otHours}</td>`;
+
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.date}</td>
+                    <td>${item.timeIn}</td>
+                    <td>${item.timeOut}</td>
+                    <td>${item.day}</td>
+                    ${otCell}
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>
