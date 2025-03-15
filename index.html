@@ -53,6 +53,7 @@
     <script>
         const googleSheetApiUrl = 'https://script.google.com/macros/s/AKfycbzmOUpibFnh9Cwhd_EtG3HnOWFC84cT0JzpqxSf7YTgywlb0Cv9T_niL_wtn37gvrQxNQ/exec';
         let holidays = []; // เก็บรายการวันหยุดพิเศษ
+        const specialEmployees = ['นายปรพัฒน์ ขัตวงษ์', 'นายวิทวัส แปงใจ']; // พนักงานที่ใช้กฎ OT แบบพิเศษ
 
         // เพิ่มวันหยุดพิเศษ
         function addHoliday() {
@@ -151,7 +152,7 @@
                     let otHours = 0;
 
                     if (inTime && outTime) {
-                        otHours = calculateOtHours(date, inTime, outTime);
+                        otHours = calculateOtHours(name, date, inTime, outTime);
                     } else {
                         otHours = 0; // ถ้าไม่มีข้อมูลครบ ให้ถือว่าไม่ได้ทำ OT
                     }
@@ -163,7 +164,7 @@
         }
 
         // คำนวณชั่วโมง OT
-        function calculateOtHours(date, timeIn, timeOut) {
+        function calculateOtHours(name, date, timeIn, timeOut) {
             const day = new Date(date).getDay();
             const [inHour, inMinute] = timeIn.split(':').map(Number);
             const [outHour, outMinute] = timeOut.split(':').map(Number);
@@ -181,14 +182,46 @@
             // ตรวจสอบว่าเป็นวันหยุดพิเศษหรือไม่
             const isHoliday = holidays.includes(date);
 
+            // ตรวจสอบว่าเป็นพนักงานพิเศษหรือไม่
+            const isSpecialEmployee = specialEmployees.includes(name);
+
             if (isHoliday || day === 6 || day === 0) { // วันหยุดพิเศษ, วันเสาร์, วันอาทิตย์
                 otHours = outTimeDecimal - inTimeDecimal;
-            } else if (day >= 1 && day <= 5) { // วันจันทร์ - ศุกร์
+            } else if (isSpecialEmployee) { // พนักงานพิเศษ
+                if (outTimeDecimal > 17) { // เริ่มนับ OT ตั้งแต่ 17:00 เป็นต้นไป
+                    otHours = outTimeDecimal - 17;
+                }
+            } else if (day >= 1 && day <= 5) { // วันจันทร์ - ศุกร์ (พนักงานทั่วไป)
                 if (outTimeDecimal > 16.5) {
                     otHours = outTimeDecimal - 16.5;
                 }
             }
-            return otHours.toFixed(2);
+
+            // ปัดเศษเวลา OT ตามเงื่อนไข
+            return roundOTHours(otHours);
+        }
+
+        // ปัดเศษเวลา OT ตามเงื่อนไข
+        function roundOTHours(otHours) {
+            if (otHours > 0.01 && otHours < 2.00) {
+                return 0.00; // OT มากกว่า 0.01 แต่ไม่ถึง 2.00 ชั่วโมง
+            } else if (otHours >= 2.00 && otHours < 3.00) {
+                return 2.00; // OT 2.00 ชั่วโมงขึ้นไป แต่ไม่ถึง 3.00 ชั่วโมง
+            } else if (otHours >= 3.00 && otHours < 4.00) {
+                return 3.00; // OT 3.00 ชั่วโมงขึ้นไป แต่ไม่ถึง 4.00 ชั่วโมง
+            } else if (otHours >= 4.00 && otHours < 5.00) {
+                return 4.00; // OT 4.00 ชั่วโมงขึ้นไป แต่ไม่ถึง 5.00 ชั่วโมง
+            } else if (otHours >= 5.00 && otHours < 6.00) {
+                return 5.00; // OT 5.00 ชั่วโมงขึ้นไป แต่ไม่ถึง 6.00 ชั่วโมง
+            } else if (otHours >= 6.00 && otHours < 7.00) {
+                return 6.00; // OT 6.00 ชั่วโมงขึ้นไป แต่ไม่ถึง 7.00 ชั่วโมง
+            } else if (otHours >= 7.00 && otHours < 8.00) {
+                return 7.00; // OT 7.00 ชั่วโมงขึ้นไป แต่ไม่ถึง 8.00 ชั่วโมง
+            } else if (otHours >= 8.00) {
+                return 8.00; // OT 8.00 ชั่วโมงขึ้นไป
+            } else {
+                return 0.00; // OT น้อยกว่า 0.01 ชั่วโมง
+            }
         }
 
         // แสดงผลลัพธ์ในตาราง
