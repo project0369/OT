@@ -3,20 +3,92 @@
 <head>
     <title>ระบบคำนวณ OT</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
         table {
             border-collapse: collapse;
             width: 100%;
+            margin-top: 20px;
         }
         th, td {
-            border: 1px solid black;
-            padding: 8px;
+            border: 1px solid #ddd;
+            padding: 10px;
             text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
         }
         .ot-highlight {
             background-color: #c8e6c9; /* สีเขียวอ่อน */
         }
-        .holiday-section {
+        .holiday-section, .controls {
             margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        input[type="date"], button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #holidayList {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+        #holidayList li {
+            background-color: #e0f2f7;
+            border: 1px solid #b3e5fc;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none; /* ซ่อนไว้ก่อน */
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
         }
 
         /* CSS สำหรับการพิมพ์ */
@@ -27,91 +99,149 @@
             table {
                 width: 100%;
                 font-size: 12px;
+                border: 1px solid black; /* เพิ่มเส้นขอบเมื่อพิมพ์ */
+            }
+            th, td {
+                border: 1px solid black;
+                padding: 5px; /* ลด padding เมื่อพิมพ์ */
+            }
+            .ot-highlight {
+                background-color: #c8e6c9 !important; /* ใช้ !important เพื่อให้แน่ใจว่าสีแสดงผลเมื่อพิมพ์ */
+                -webkit-print-color-adjust: exact; /* สำหรับ Chrome/Safari */
+                color-adjust: exact; /* สำหรับเบราว์เซอร์อื่น ๆ */
+            }
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: #fff;
+            }
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 0;
             }
         }
     </style>
 </head>
 <body>
-    <h1>ระบบคำนวณ OT</h1>
+    <div class="container">
+        <h1>ระบบคำนวณ OT</h1>
 
-    <!-- ส่วนเพิ่มวันหยุดพิเศษ -->
-    <div class="holiday-section no-print">
-        <h2>เพิ่มวันหยุดพิเศษ</h2>
-        <input type="date" id="holidayDate">
-        <button onclick="addHoliday()">เพิ่มวันหยุด</button>
-        <ul id="holidayList"></ul>
+        <div class="holiday-section no-print">
+            <h2>เพิ่มวันหยุดพิเศษ</h2>
+            <input type="date" id="holidayDate">
+            <button onclick="addHoliday()">เพิ่มวันหยุด</button>
+            <ul id="holidayList"></ul>
+        </div>
+
+        <div class="controls no-print">
+            <button onclick="calculateAndDisplayOT()">คำนวณ OT</button>
+            <button onclick="filterAndDisplayOT()">แยก OT</button>
+            <button onclick="printTable()">พิมพ์</button>
+        </div>
+
+        <div id="messageBox" class="message"></div>
+
+        <table id="otTable">
+            <thead>
+                <tr>
+                    <th>ชื่อ-สกุล</th>
+                    <th>วันที่</th>
+                    <th>เวลาเข้างาน</th>
+                    <th>เวลาออกงาน</th>
+                    <th>วัน</th>
+                    <th>OT (ชั่วโมง)</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
     </div>
-
-    <!-- ปุ่มคำนวณ OT, แยก OT และพิมพ์ -->
-    <div class="no-print">
-        <button onclick="calculateAndDisplayOT()">คำนวณ OT</button>
-        <button onclick="filterAndDisplayOT()">แยก OT</button>
-        <button onclick="printTable()">พิมพ์</button>
-    </div>
-
-    <!-- ตารางแสดงผล OT -->
-    <table id="otTable">
-        <thead>
-            <tr>
-                <th>ชื่อ-สกุล</th>
-                <th>วันที่</th>
-                <th>เวลาเข้างาน</th>
-                <th>เวลาออกงาน</th>
-                <th>วัน</th>
-                <th>OT (ชั่วโมง)</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
 
     <script>
         const googleSheetApiUrl = 'https://script.google.com/macros/s/AKfycbzmOUpibFnh9Cwhd_EtG3HnOWFC84cT0JzpqxSf7YTgywlb0Cv9T_niL_wtn37gvrQxNQ/exec';
         let holidays = []; // เก็บรายการวันหยุดพิเศษ
-        const specialEmployees = ['นายปรพัฒน์ ขัตวงษ์', 'นายวิทวัส แปงใจ']; // พนักงานที่ใช้กฎ OT แบบพิเศษ
-        let otData = []; // เก็บข้อมูล OT ที่คำนวณได้
+        // พนักงานที่ใช้กฎ OT แบบพิเศษ (ตัวอย่าง)
+        const specialEmployees = ['นายปรพัฒน์ ขัตวงษ์', 'นายวิทวัส แปงใจ'];
+        let otData = []; // เก็บข้อมูล OT ที่คำนวณได้ทั้งหมด
 
-        // เพิ่มวันหยุดพิเศษ
+        // --- ฟังก์ชันช่วยเหลือ ---
+        function showMessage(msg, type) {
+            const msgBox = document.getElementById('messageBox');
+            msgBox.textContent = msg;
+            msgBox.className = `message ${type}`;
+            msgBox.style.display = 'block';
+            setTimeout(() => {
+                msgBox.style.display = 'none';
+            }, 5000); // ซ่อนข้อความหลังจาก 5 วินาที
+        }
+
+        // --- ฟังก์ชันจัดการวันหยุดพิเศษ ---
         function addHoliday() {
             const holidayDate = document.getElementById('holidayDate').value;
-            if (holidayDate && !holidays.includes(holidayDate)) {
-                holidays.push(holidayDate);
-                updateHolidayList();
+            if (holidayDate) {
+                // ตรวจสอบว่าเป็นวันที่ถูกต้องหรือไม่
+                const dateObj = new Date(holidayDate);
+                if (isNaN(dateObj.getTime())) {
+                    showMessage('กรุณาเลือกวันที่ที่ถูกต้อง', 'error');
+                    return;
+                }
+
+                // ป้องกันการเพิ่มวันที่ซ้ำ
+                if (!holidays.includes(holidayDate)) {
+                    holidays.push(holidayDate);
+                    updateHolidayList();
+                    showMessage(`เพิ่มวันหยุด ${holidayDate} เรียบร้อยแล้ว`, 'success');
+                } else {
+                    showMessage('วันที่นี้ถูกเพิ่มเป็นวันหยุดแล้ว', 'error');
+                }
+            } else {
+                showMessage('กรุณาเลือกวันที่ก่อน', 'error');
             }
         }
 
-        // อัปเดตรายการวันหยุดในหน้าเว็บ
         function updateHolidayList() {
             const holidayList = document.getElementById('holidayList');
             holidayList.innerHTML = holidays.map(date => `<li>${date}</li>`).join('');
         }
 
-        // คำนวณและแสดงผล OT
-        function calculateAndDisplayOT() {
-            fetch(googleSheetApiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Data from Google Sheets:', data); // ตรวจสอบข้อมูลที่ได้
-                    const parsedData = parseData(data); // แปลงข้อมูล
-                    otData = calculateOT(parsedData); // คำนวณ OT
-                    displayResults(otData, true); // แสดงผลทั้งหมด
-                })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                });
+        // --- ฟังก์ชันหลักในการคำนวณและแสดงผล OT ---
+        async function calculateAndDisplayOT() {
+            showMessage('กำลังดึงและคำนวณข้อมูล OT...', 'info');
+            try {
+                const response = await fetch(googleSheetApiUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Data from Google Sheets:', data);
+
+                const parsedData = parseData(data); // แปลงข้อมูล
+                otData = calculateOT(parsedData); // คำนวณ OT
+                displayResults(otData, true); // แสดงผลทั้งหมด
+                showMessage('คำนวณ OT เสร็จสมบูรณ์แล้ว', 'success');
+
+            } catch (error) {
+                console.error('Error fetching or processing data:', error);
+                showMessage(`เกิดข้อผิดพลาดในการดึงหรือคำนวณข้อมูล: ${error.message}`, 'error');
+            }
         }
 
         // แปลงข้อมูลจาก Array ของ Array เป็น Array ของ Object
         function parseData(data) {
             const result = [];
-            const headers = data[0]; // แถวแรกคือหัวข้อคอลัมน์
+            if (!data || data.length === 0) {
+                return result;
+            }
+            const headers = data[0].map(header => header.trim()); // แถวแรกคือหัวข้อคอลัมน์
 
             for (let i = 1; i < data.length; i++) {
                 const obj = {};
                 const currentLine = data[i];
 
                 for (let j = 0; j < headers.length; j++) {
-                    obj[headers[j].trim()] = currentLine[j] ? currentLine[j].trim() : '';
+                    // ใช้ nullish coalescing operator (?? '') เพื่อจัดการค่า null/undefined
+                    obj[headers[j]] = (currentLine[j] !== undefined && currentLine[j] !== null) ? String(currentLine[j]).trim() : '';
                 }
                 result.push(obj);
             }
@@ -120,115 +250,129 @@
 
         // คำนวณ OT
         function calculateOT(data) {
-            const otData = [];
-            const employeeData = {};
+            const otCalculatedData = [];
+            const employeeDailyEntries = {}; // เก็บข้อมูลดิบของแต่ละวันเพื่อเรียงลำดับ
 
             data.forEach(row => {
                 const name = row['ชื่อ-สกุล'];
-                const dateTime = row['วันที่-เวลา'];
+                const dateTimeStr = row['วันที่-เวลา']; // ชื่อคอลัมน์ตรงตาม Google Sheet
 
                 // ตรวจสอบว่ามีข้อมูลหรือไม่
-                if (!name || !dateTime) {
-                    console.warn('Missing data in row:', row);
+                if (!name || !dateTimeStr) {
+                    console.warn('Missing name or date-time in row:', row);
                     return; // ข้ามแถวนี้
                 }
 
-                // แปลงรูปแบบ ISO 8601 เป็น "ปี-เดือน-วัน ชั่วโมง:นาที:วินาที"
-                const isoDate = new Date(dateTime);
+                // แปลงรูปแบบ ISO 8601 เป็น Date object
+                const isoDate = new Date(dateTimeStr);
                 if (isNaN(isoDate.getTime())) {
                     console.warn('Invalid date-time format in row:', row);
                     return; // ข้ามแถวนี้
                 }
 
                 const date = isoDate.toISOString().split('T')[0]; // ได้รูปแบบ "ปี-เดือน-วัน"
-                const time = isoDate.toTimeString().split(' ')[0]; // ได้รูปแบบ "ชั่วโมง:นาที:วินาที"
+                const time = isoDate.toTimeString().split(' ')[0].substring(0, 5); // ได้รูปแบบ "ชั่วโมง:นาที" (ตัดวินาทีออกเพื่อความกระชับ)
 
-                if (!employeeData[name]) {
-                    employeeData[name] = {};
+                // จัดกลุ่มข้อมูลตามชื่อและวันที่ และเก็บ timestamp เพื่อใช้เรียงลำดับ
+                if (!employeeDailyEntries[name]) {
+                    employeeDailyEntries[name] = {};
                 }
-
-                if (!employeeData[name][date]) {
-                    employeeData[name][date] = {};
+                if (!employeeDailyEntries[name][date]) {
+                    employeeDailyEntries[name][date] = [];
                 }
-
-                // กำหนดเวลาเข้างานและเวลาออกงาน
-                if (!employeeData[name][date].in) {
-                    employeeData[name][date].in = time;
-                } else {
-                    employeeData[name][date].out = time;
-                }
+                employeeDailyEntries[name][date].push({ time: time, timestamp: isoDate.getTime() });
             });
 
             // คำนวณ OT สำหรับแต่ละคนและแต่ละวัน
-            for (const name in employeeData) {
-                for (const date in employeeData[name]) {
-                    const inTime = employeeData[name][date].in;
-                    const outTime = employeeData[name][date].out;
+            for (const name in employeeDailyEntries) {
+                for (const date in employeeDailyEntries[name]) {
+                    const entries = employeeDailyEntries[name][date];
+
+                    // **สำคัญ:** เรียงลำดับรายการตาม timestamp (เวลา) จากน้อยไปมาก
+                    entries.sort((a, b) => a.timestamp - b.timestamp);
+
+                    // กำหนดเวลาเข้างานและเวลาออกงานจากรายการแรกและรายการสุดท้ายหลังจากเรียงลำดับแล้ว
+                    const inTime = entries.length > 0 ? entries[0].time : '-';
+                    // ถ้ามีแค่ 1 รายการ ให้ถือว่าไม่มีเวลาออก หรือถ้ามากกว่า 1 รายการ ให้ใช้รายการสุดท้าย
+                    const outTime = entries.length > 1 ? entries[entries.length - 1].time : (entries.length === 1 ? '-' : '-');
+
                     const day = new Date(date).toLocaleDateString('th-TH', { weekday: 'long' });
                     let otHours = 0;
 
-                    if (inTime && outTime) {
+                    if (inTime !== '-' && outTime !== '-') {
                         otHours = calculateOtHours(name, date, inTime, outTime);
                     } else {
                         otHours = 0; // ถ้าไม่มีข้อมูลครบ ให้ถือว่าไม่ได้ทำ OT
+                        // console.warn(`Missing in/out time for ${name} on ${date}. OT set to 0.`);
                     }
 
-                    otData.push({ name, date, timeIn: inTime || '-', timeOut: outTime || '-', day, otHours });
+                    otCalculatedData.push({ name, date, timeIn: inTime, timeOut: outTime, day, otHours });
                 }
             }
-            return otData;
+            return otCalculatedData;
         }
 
-        // คำนวณชั่วโมง OT
+        // คำนวณชั่วโมง OT ตามกฎ
         function calculateOtHours(name, date, timeIn, timeOut) {
-            const day = new Date(date).getDay();
-            const [inHour, inMinute] = timeIn.split(':').map(Number);
-            const [outHour, outMinute] = timeOut.split(':').map(Number);
+            const dayOfWeek = new Date(date).getDay(); // 0 = อาทิตย์, 1 = จันทร์, ..., 6 = เสาร์
 
-            // ตรวจสอบว่าเวลาเข้างานและเวลาออกงานถูกต้อง
-            if (isNaN(inHour) || isNaN(inMinute) || isNaN(outHour) || isNaN(outMinute)) {
-                console.warn('Invalid time format:', { timeIn, timeOut });
+            // แปลงเวลาเป็นชั่วโมงทศนิยม
+            const parseTime = (timeStr) => {
+                const [hour, minute] = timeStr.split(':').map(Number);
+                if (isNaN(hour) || isNaN(minute)) {
+                    console.warn('Invalid time format in parseTime:', timeStr);
+                    return null;
+                }
+                return hour + minute / 60;
+            };
+
+            const inTimeDecimal = parseTime(timeIn);
+            let outTimeDecimal = parseTime(timeOut);
+
+            if (inTimeDecimal === null || outTimeDecimal === null) {
                 return 0;
             }
 
-            const inTimeDecimal = inHour + inMinute / 60;
-            const outTimeDecimal = outHour + outMinute / 60;
+            // กรณีทำงานข้ามคืน: ถ้าเวลาออกน้อยกว่าเวลาเข้า ให้บวก 24 ชั่วโมงเข้าไปที่เวลาออก
+            if (outTimeDecimal < inTimeDecimal) {
+                outTimeDecimal += 24;
+            }
+
             let otHours = 0;
 
-            // ตรวจสอบว่าเป็นวันหยุดพิเศษหรือไม่
             const isHoliday = holidays.includes(date);
-
-            // ตรวจสอบว่าเป็นพนักงานพิเศษหรือไม่
+            const isWeekend = (dayOfWeek === 6 || dayOfWeek === 0); // เสาร์ หรือ อาทิตย์
             const isSpecialEmployee = specialEmployees.includes(name);
 
-            if (isHoliday || day === 6 || day === 0) { // วันหยุดพิเศษ, วันเสาร์, วันอาทิตย์
+            if (isHoliday || isWeekend) { // วันหยุดพิเศษ, วันเสาร์, วันอาทิตย์
                 otHours = outTimeDecimal - inTimeDecimal;
-            } else if (isSpecialEmployee) { // พนักงานพิเศษ
-                if (outTimeDecimal > 17) { // เริ่มนับ OT ตั้งแต่ 17:00 เป็นต้นไป
-                    otHours = outTimeDecimal - 17;
+            } else if (isSpecialEmployee) { // พนักงานพิเศษ (วันจันทร์ - ศุกร์)
+                const regularEndTime = 17.00; // 17:00 น.
+                if (outTimeDecimal > regularEndTime) {
+                    otHours = outTimeDecimal - regularEndTime;
                 }
-            } else if (day >= 1 && day <= 5) { // วันจันทร์ - ศุกร์ (พนักงานทั่วไป)
-                if (outHour === 0) { // กรณีทำงานเกินเที่ยงคืน (เวลาออกงานเป็น 00:XX:XX)
-                    // คำนวณ OT ตั้งแต่ 16:30 ถึง 24:00
-                    otHours = (24 - 16.5) + 4; // OT 7.5 ชั่วโมง + 4 ชั่วโมง (เกินเที่ยงคืน)
-                } else if (outTimeDecimal > 16.5) {
-                    otHours = outTimeDecimal - 16.5;
+            } else if (dayOfWeek >= 1 && dayOfWeek <= 5) { // วันจันทร์ - ศุกร์ (พนักงานทั่วไป)
+                const regularEndTime = 16.5; // 16:30 น.
+
+                if (outTimeDecimal > regularEndTime) {
+                    otHours = outTimeDecimal - regularEndTime;
                 }
 
-                // หาก OT เกิน 4 ชั่วโมง ให้แสดงผลเป็น 4.00 ชั่วโมง
+                // จำกัด OT สูงสุด 4 ชั่วโมงสำหรับวันจันทร์-ศุกร์
                 if (otHours > 4) {
                     otHours = 4;
                 }
             }
-
-            // ปัดเศษเวลา OT ตามเงื่อนไข
-            return roundOTHours(otHours);
+            // ถ้า OT ติดลบหรือไม่มี OT ให้เป็น 0
+            return roundOTHours(Math.max(0, otHours));
         }
 
         // ปัดเศษเวลา OT ตามเงื่อนไข
         function roundOTHours(otHours) {
-            if (otHours > 0.01 && otHours < 2.00) {
-                return 0.00; // OT มากกว่า 0.01 แต่ไม่ถึง 2.00 ชั่วโมง
+            if (otHours < 0.01) { // น้อยกว่า 0.01 ให้เป็น 0
+                return 0.00;
+            } else if (otHours >= 0.01 && otHours < 2.00) {
+                 return 0.00; // OT มากกว่า 0.01 แต่ไม่ถึง 2.00 ชั่วโมง
             } else if (otHours >= 2.00 && otHours < 3.00) {
                 return 2.00; // OT 2.00 ชั่วโมงขึ้นไป แต่ไม่ถึง 3.00 ชั่วโมง
             } else if (otHours >= 3.00 && otHours < 4.00) {
@@ -244,20 +388,27 @@
             } else if (otHours >= 8.00) {
                 return 8.00; // OT 8.00 ชั่วโมงขึ้นไป
             } else {
-                return 0.00; // OT น้อยกว่า 0.01 ชั่วโมง
+                return 0.00; // กรณีอื่น ๆ
             }
         }
 
         // แสดงผลลัพธ์ในตาราง
         function displayResults(data, showAll = true) {
             const tableBody = document.querySelector('#otTable tbody');
-            tableBody.innerHTML = '';
+            tableBody.innerHTML = ''; // ล้างข้อมูลเก่า
 
             const filteredData = showAll ? data : data.filter(item => item.otHours > 0);
 
+            if (filteredData.length === 0) {
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = `<td colspan="6" style="text-align: center; color: #777;">ไม่พบข้อมูล OT</td>`;
+                tableBody.appendChild(noDataRow);
+                return;
+            }
+
             filteredData.forEach(item => {
                 const row = document.createElement('tr');
-                const otCell = `<td class="${item.otHours >= 2 ? 'ot-highlight' : ''}">${item.otHours}</td>`;
+                const otCellClass = item.otHours >= 2 ? 'ot-highlight' : '';
 
                 row.innerHTML = `
                     <td>${item.name}</td>
@@ -265,7 +416,7 @@
                     <td>${item.timeIn}</td>
                     <td>${item.timeOut}</td>
                     <td>${item.day}</td>
-                    ${otCell}
+                    <td class="${otCellClass}">${item.otHours.toFixed(2)}</td>
                 `;
                 tableBody.appendChild(row);
             });
@@ -274,6 +425,7 @@
         // กรองและแสดงผลเฉพาะข้อมูลที่มี OT
         function filterAndDisplayOT() {
             displayResults(otData, false); // แสดงเฉพาะข้อมูลที่มี OT
+            showMessage('แสดงเฉพาะข้อมูลที่มี OT', 'info');
         }
 
         // พิมพ์ตาราง
