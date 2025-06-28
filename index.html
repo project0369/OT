@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>ระบบคำนวณ OT</title>
-    <link rel="icon" type="image/png" sizes="16x16" href="icon.png">
     <style>
         table {
             border-collapse: collapse;
@@ -11,7 +10,7 @@
         th, td {
             border: 1px solid black;
             padding: 8px;
-            text-align: center; /* จัดตำแหน่งกึ่งกลางทั้งแถวหัวข้อและข้อมูล */
+            text-align: left;
         }
         .ot-highlight {
             background-color: #c8e6c9; /* สีเขียวอ่อน */
@@ -19,6 +18,7 @@
         .holiday-section {
             margin-bottom: 20px;
         }
+
         /* CSS สำหรับการพิมพ์ */
         @media print {
             .no-print {
@@ -29,14 +29,11 @@
                 font-size: 12px;
             }
         }
-        /* จัดตำแหน่งหัวข้อให้อยู่กึ่งกลาง */
-        h1 {
-            text-align: center;
-        }
     </style>
 </head>
 <body>
-    <h1 id="headerTitle">ระบบคำนวณ OT</h1> <!-- เพิ่ม id เพื่ออัปเดตหัวข้อ -->
+    <h1>ระบบคำนวณ OT</h1>
+
     <!-- ส่วนเพิ่มวันหยุดพิเศษ -->
     <div class="holiday-section no-print">
         <h2>เพิ่มวันหยุดพิเศษ</h2>
@@ -44,69 +41,31 @@
         <button onclick="addHoliday()">เพิ่มวันหยุด</button>
         <ul id="holidayList"></ul>
     </div>
+
     <!-- ปุ่มคำนวณ OT, แยก OT และพิมพ์ -->
     <div class="no-print">
         <button onclick="calculateAndDisplayOT()">คำนวณ OT</button>
         <button onclick="filterAndDisplayOT()">แยก OT</button>
         <button onclick="printTable()">พิมพ์</button>
     </div>
+
     <!-- ตารางแสดงผล OT -->
     <table id="otTable">
         <thead>
             <tr>
-                <th>วันที่</th>
                 <th>ชื่อ-สกุล</th>
+                <th>วันที่</th>
                 <th>เวลาเข้างาน</th>
-                <th>ลายมือชื่อ</th> <!-- คอลัมน์ "ลายมือชื่อ" -->
                 <th>เวลาออกงาน</th>
-                <th>ลายมือชื่อ</th> <!-- คอลัมน์ "ลายมือชื่อ" -->
+                <th>วัน</th>
                 <th>OT (ชั่วโมง)</th>
             </tr>
         </thead>
         <tbody>
         </tbody>
     </table>
+
     <script>
-        // ฟังก์ชันแปลงวันที่เป็นรูปแบบ "วัน เดือน(ย่อ) ปี(พุทธศักราช)"
-        function formatDateThai(dateString) {
-            const date = new Date(dateString);
-            const thaiMonths = [
-                'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-                'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
-            ];
-            const day = date.getDate();
-            const month = thaiMonths[date.getMonth()];
-            const year = date.getFullYear() + 543; // แปลงเป็นปีพุทธศักราช
-            return `${day} ${month} ${year}`;
-        }
-
-        // ฟังก์ชันแปลงเดือนย่อเป็นชื่อเดือนเต็ม
-        function getMonthName(monthAbbr) {
-            const monthMap = {
-                'ม.ค.': 'มกราคม',
-                'ก.พ.': 'กุมภาพันธ์',
-                'มี.ค.': 'มีนาคม',
-                'เม.ย.': 'เมษายน',
-                'พ.ค.': 'พฤษภาคม',
-                'มิ.ย.': 'มิถุนายน',
-                'ก.ค.': 'กรกฎาคม',
-                'ส.ค.': 'สิงหาคม',
-                'ก.ย.': 'กันยายน',
-                'ต.ค.': 'ตุลาคม',
-                'พ.ย.': 'พฤศจิกายน',
-                'ธ.ค.': 'ธันวาคม'
-            };
-            return monthMap[monthAbbr] || '';
-        }
-
-        // ฟังก์ชันตัด :ss ออกจากเวลา (แสดงเฉพาะ HH:mm) และเพิ่ม "น." ต่อท้าย (ถ้ามีข้อมูล)
-        function formatTime(timeString) {
-            if (!timeString || timeString === '-') {
-                return '-'; // ไม่ต้องเพิ่ม "น." ถ้าไม่มีข้อมูลหรือเป็น "-"
-            }
-            return timeString.slice(0, 5) + ' น.'; // เก็บเฉพาะชั่วโมงและนาที (HH:mm) และเพิ่ม "น."
-        }
-
         const googleSheetApiUrl = 'https://script.google.com/macros/s/AKfycbzmOUpibFnh9Cwhd_EtG3HnOWFC84cT0JzpqxSf7YTgywlb0Cv9T_niL_wtn37gvrQxNQ/exec';
         let holidays = []; // เก็บรายการวันหยุดพิเศษ
         const specialEmployees = ['นายปรพัฒน์ ขัตวงษ์', 'นายวิทวัส แปงใจ']; // พนักงานที่ใช้กฎ OT แบบพิเศษ
@@ -136,9 +95,6 @@
                     const parsedData = parseData(data); // แปลงข้อมูล
                     otData = calculateOT(parsedData); // คำนวณ OT
                     displayResults(otData, true); // แสดงผลทั้งหมด
-
-                    // อัปเดตหัวข้อตามเดือนที่พบในข้อมูล
-                    updateHeaderTitle(otData);
                 })
                 .catch(error => {
                     console.error('Error fetching data:', error);
@@ -149,9 +105,11 @@
         function parseData(data) {
             const result = [];
             const headers = data[0]; // แถวแรกคือหัวข้อคอลัมน์
+
             for (let i = 1; i < data.length; i++) {
                 const obj = {};
                 const currentLine = data[i];
+
                 for (let j = 0; j < headers.length; j++) {
                     obj[headers[j].trim()] = currentLine[j] ? currentLine[j].trim() : '';
                 }
@@ -164,28 +122,35 @@
         function calculateOT(data) {
             const otData = [];
             const employeeData = {};
+
             data.forEach(row => {
                 const name = row['ชื่อ-สกุล'];
                 const dateTime = row['วันที่-เวลา'];
+
                 // ตรวจสอบว่ามีข้อมูลหรือไม่
                 if (!name || !dateTime) {
                     console.warn('Missing data in row:', row);
                     return; // ข้ามแถวนี้
                 }
+
                 // แปลงรูปแบบ ISO 8601 เป็น "ปี-เดือน-วัน ชั่วโมง:นาที:วินาที"
                 const isoDate = new Date(dateTime);
                 if (isNaN(isoDate.getTime())) {
                     console.warn('Invalid date-time format in row:', row);
                     return; // ข้ามแถวนี้
                 }
+
                 const date = isoDate.toISOString().split('T')[0]; // ได้รูปแบบ "ปี-เดือน-วัน"
                 const time = isoDate.toTimeString().split(' ')[0]; // ได้รูปแบบ "ชั่วโมง:นาที:วินาที"
+
                 if (!employeeData[name]) {
                     employeeData[name] = {};
                 }
+
                 if (!employeeData[name][date]) {
                     employeeData[name][date] = {};
                 }
+
                 // กำหนดเวลาเข้างานและเวลาออกงาน
                 if (!employeeData[name][date].in) {
                     employeeData[name][date].in = time;
@@ -193,24 +158,22 @@
                     employeeData[name][date].out = time;
                 }
             });
+
             // คำนวณ OT สำหรับแต่ละคนและแต่ละวัน
             for (const name in employeeData) {
                 for (const date in employeeData[name]) {
                     const inTime = employeeData[name][date].in;
                     const outTime = employeeData[name][date].out;
+                    const day = new Date(date).toLocaleDateString('th-TH', { weekday: 'long' });
                     let otHours = 0;
+
                     if (inTime && outTime) {
                         otHours = calculateOtHours(name, date, inTime, outTime);
                     } else {
                         otHours = 0; // ถ้าไม่มีข้อมูลครบ ให้ถือว่าไม่ได้ทำ OT
                     }
-                    otData.push({ 
-                        date: formatDateThai(date), // แปลงวันที่ใหม่
-                        name, 
-                        timeIn: formatTime(inTime || '-'), // ตัด :ss และเพิ่ม "น." (ถ้ามีข้อมูล)
-                        timeOut: formatTime(outTime || '-'), // ตัด :ss และเพิ่ม "น." (ถ้ามีข้อมูล)
-                        otHours 
-                    });
+
+                    otData.push({ name, date, timeIn: inTime || '-', timeOut: outTime || '-', day, otHours });
                 }
             }
             return otData;
@@ -221,18 +184,23 @@
             const day = new Date(date).getDay();
             const [inHour, inMinute] = timeIn.split(':').map(Number);
             const [outHour, outMinute] = timeOut.split(':').map(Number);
+
             // ตรวจสอบว่าเวลาเข้างานและเวลาออกงานถูกต้อง
             if (isNaN(inHour) || isNaN(inMinute) || isNaN(outHour) || isNaN(outMinute)) {
                 console.warn('Invalid time format:', { timeIn, timeOut });
                 return 0;
             }
+
             const inTimeDecimal = inHour + inMinute / 60;
             const outTimeDecimal = outHour + outMinute / 60;
             let otHours = 0;
+
             // ตรวจสอบว่าเป็นวันหยุดพิเศษหรือไม่
             const isHoliday = holidays.includes(date);
+
             // ตรวจสอบว่าเป็นพนักงานพิเศษหรือไม่
             const isSpecialEmployee = specialEmployees.includes(name);
+
             if (isHoliday || day === 6 || day === 0) { // วันหยุดพิเศษ, วันเสาร์, วันอาทิตย์
                 otHours = outTimeDecimal - inTimeDecimal;
             } else if (isSpecialEmployee) { // พนักงานพิเศษ
@@ -246,11 +214,13 @@
                 } else if (outTimeDecimal > 16.5) {
                     otHours = outTimeDecimal - 16.5;
                 }
+
                 // หาก OT เกิน 4 ชั่วโมง ให้แสดงผลเป็น 4.00 ชั่วโมง
                 if (otHours > 4) {
                     otHours = 4;
                 }
             }
+
             // ปัดเศษเวลา OT ตามเงื่อนไข
             return roundOTHours(otHours);
         }
@@ -282,33 +252,23 @@
         function displayResults(data, showAll = true) {
             const tableBody = document.querySelector('#otTable tbody');
             tableBody.innerHTML = '';
+
             const filteredData = showAll ? data : data.filter(item => item.otHours > 0);
+
             filteredData.forEach(item => {
                 const row = document.createElement('tr');
                 const otCell = `<td class="${item.otHours >= 2 ? 'ot-highlight' : ''}">${item.otHours}</td>`;
+
                 row.innerHTML = `
-                    <td>${item.date}</td> <!-- วันที่ -->
-                    <td>${item.name}</td> <!-- ชื่อ-สกุล -->
-                    <td>${item.timeIn}</td> <!-- เวลาเข้างาน -->
-                    <td></td> <!-- ลายมือชื่อ (ว่างเปล่า) -->
-                    <td>${item.timeOut}</td> <!-- เวลาออกงาน -->
-                    <td></td> <!-- ลายมือชื่อ (ว่างเปล่า) -->
+                    <td>${item.name}</td>
+                    <td>${item.date}</td>
+                    <td>${item.timeIn}</td>
+                    <td>${item.timeOut}</td>
+                    <td>${item.day}</td>
                     ${otCell}
                 `;
                 tableBody.appendChild(row);
             });
-        }
-
-        // อัปเดตหัวข้อตามเดือนที่พบในข้อมูล
-        function updateHeaderTitle(data) {
-            if (data.length > 0) {
-                const firstDate = data[0].date; // วันที่แรกในข้อมูล
-                const monthAbbr = firstDate.split(' ')[1]; // ดึงเดือนย่อ (เช่น "ก.พ.")
-                const monthName = getMonthName(monthAbbr); // แปลงเป็นชื่อเดือนเต็ม
-                if (monthName) {
-                    document.getElementById('headerTitle').textContent = `รายการปฏิบัติหน้าที่ ประจำเดือน ${monthName}`;
-                }
-            }
         }
 
         // กรองและแสดงผลเฉพาะข้อมูลที่มี OT
